@@ -220,7 +220,29 @@ Vim 使用 q 来录制，同时也是使用 q 来结束录制
 3. 操作结束后，回到 normal 模式下，再按一下 q 退出宏的录制
 4. 选中要进行宏操作的行，然后按下 : 键，输入 normal @a 来对所有的行进行批量操作
 
+Note: normal 表示后面要输入的是 normal 模式下的命令
+上面的操作，我们也可以用其它方式来完成：
+选中要操作的行，然后按下 : 键，输入 normal I" ，这样就在选中行的开头加上了冒号，然后，再按下 : 输入 normal A" 就在选中行的末尾加上了冒号
+
+Vim 中的补全大法
+命令			补全类型
+<Ctrl + n>		普通关键字
+<Ctrl + x><Ctrl + n>	当前缓冲区关键字
+<Ctrl + x><Ctrl + i>	包含文件关键字
+<Ctrl + x><Ctrl + ]>	标签文件关键字
+<Ctrl + x><Ctrl + k>	字典查找
+<Ctrl + x><Ctrl + l>	整行补全
+<Ctrl + x><Ctrl + f>	文件名补全
+<Ctrl + x><Ctrl + o>	全能(0mni)补全
+
+常见了三种补全方式
+使用 <Ctrl + n> 和 <Ctrl + p> 补全单词
+使用 <Ctrl + x> <Ctrl + f> 补全文件名
+使用 <Ctrl + x> <Ctrl + o> 补全代码，需要开启文件类型检查，安装插件
 
 
-
+给 Vim 换个颜色
+使用 :colorscheme 来显示当前的主题配色，默认是 default
+使用 :colorscheme 加空格，再加 <Ctrl + d> 来显示所有的配色方案
+使用 :colorscheme 加空格，再加配色名，就可以修改颜色
 
