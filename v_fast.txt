@@ -203,7 +203,7 @@ Vim 不是使用单一的寄存器来进行剪切、粘贴、复制，而是使�
 "%	表示当前文件名的寄存器
 ".	表示上次插入的文本的寄存器
 示例：直接引用系统剪切板上的数据
-"+ p	直接使用系统剪切板上的数据
+"+p	直接使用系统剪切板上的数据
 
 
 强大的 Vim 宏(macro)
@@ -245,4 +245,43 @@ Vim 中的补全大法
 使用 :colorscheme 来显示当前的主题配色，默认是 default
 使用 :colorscheme 加空格，再加 <Ctrl + d> 来显示所有的配色方案
 使用 :colorscheme 加空格，再加配色名，就可以修改颜色
+
+补充：在两个窗口中打开两个文件
+vim a.txt b.txt -O	这样就可以在两个窗口中打开两个文件
+
+补充：打开语法高亮
+:syntax on
+
+从网络上下载配色
+例如：https://github.com/flazz/vim-colorschemes
+
+
+Vim 的配置
+将常用的设置进行持久化
+编辑 ~/.vimrc 文件
+直接在文件中写入命令即可，比如 set number, syntax on 等命令，命令前无需加 : 
+.vimrc 文件中使用 " 作为注释的标志
+------------示例：-----------------
+" 设置行号
+set nu
+
+" 设置语法高亮
+syntax on
+
+" 设置高亮搜索显示
+set hlsearch
+
+" 在 insert 模式下，使用 jj 进入 normal 模式
+inoremap jj <Esc>
+
+" 使用 <Ctrl> + h/j/k/l 来切换窗口
+noremap <C-h> <C-w>h
+noremap <C-j> <C-w>j
+noremap <C-k> <C-w>k
+noremap <C-l> <C-w>l
+-----------------------------------
+
+Vim 脚本
+Vim 脚本可以实现强大的 Vim 插件
+可以通过 vimscript 实现更多的 vim 控制，开发自己的插件
 
