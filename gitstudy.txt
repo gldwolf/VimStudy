@@ -1,0 +1,31 @@
+git 的全局变量设置：
+git config --global user.name "Gldwolf"
+git config --global user.email "zengqiangzhao@sina.com"
+
+创建一个新的仓库：
+git clone http://113.143.100.136:18008/Gldwolf/ActiveMQ.git
+cd ActiveMQ
+touch README.md
+git add README.md
+git commit -m "add README"
+git push -u origin master
+
+已存在的文件或者 git repository:
+cd existing_folder
+git init
+git remote add origin http://113.143.100.136:18008/Gldwolf/ActiveMQ.git
+git add .
+git commit 
+git push -u origin master
+
+
+对所有的 git 操作都是围绕 3 大步骤来展开的：
+1. 从 git 仓库获取数据 (git clone)
+2. 改动代码
+3. 将改动传回 git 仓库 (git push)
+
+在这 3 个步骤中涉及到两个 repository，一个是 remote repository，一个是 local repository.
+
+在对 remote repository 的操作时涉及到 remote server, remote repository, remote branch
+
+在 clone 完成后，git 会自动将远程仓库命名为 origin（origin 只相当于一个别名，）
