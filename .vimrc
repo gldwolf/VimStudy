@@ -15,6 +15,7 @@ noremap <C-h> <C-w>h
 noremap <C-j> <C-w>j
 noremap <C-k> <C-w>k
 noremap <C-l> <C-w>l
+noremap ff <C-f>
 
 " 使用 moring 配色方案
 colorscheme morning
