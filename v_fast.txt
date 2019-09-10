@@ -285,3 +285,17 @@ Vim 脚本
 Vim 脚本可以实现强大的 Vim 插件
 可以通过 vimscript 实现更多的 vim 控制，开发自己的插件
 
+************** Vim 映射 **************
+
+# 基本映射：即 normal 模式下的映射
+使用 map 就可以实现映射，比如 :map - x 就可以用 - 来删除字符
+例如：:nmap <space> viw 这里按下空格就可以选中整个单词
+:map <C-d> dd 就可以使用 Ctrl+d 来删除一行
+
+# Vim 常用模式 normal/visual/insert 都可以定义映射 
+用 nmap/vmap/imap 定义映射只在 normal/visual/insert 中分别有效
+比如在 insert 模式下使用 Ctrl+d 来删除一行的内容：
+:imap <C-d> <Esc>ddO
+
+## nnoremap/vnoremap/inoremap 分别代表各种模式下的非递归映射：即 no recursive map
+！！！任何时候都应该使用非递归映射！！！
