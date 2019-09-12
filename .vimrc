@@ -28,7 +28,7 @@ let mapleader=","
 " ======= insert 模式 =======
 inoremap jj <Esc>`^       " 在 insert 模式下，使用 jj 进入 normal 模式，并返回到原来的光标位置
 inoremap <C-d> <Esc>ddO   " 在 insert 模式下使用 Ctrl + d 来删除一行
-innoremap <leader>w <Esc>:w<cr> " 在 insert 模式下使用 , + w 来将缓冲区写入到文件（即保存）
+inoremap <leader>w <Esc>:w<cr> " 在 insert 模式下使用 , + w 来将缓冲区写入到文件（即保存）
 
 " ======= normal 模式 =======
 " 使用 <Ctrl> + h/j/k/l 来切换窗口
@@ -36,7 +36,7 @@ noremap <C-h> <C-w>h
 noremap <C-j> <C-w>j
 noremap <C-k> <C-w>k
 noremap <C-l> <C-w>l
-nnoremap <space> viw        " 使用空格键来选定一个单词
+" nnoremap <space> viw        " 使用空格键来选定一个单词
 nnoremap <leader>w :w<cr>   " 在 normal 模式下使用 , + w 来将缓冲区写入到文件
 
 " 使用 moring 配色方案
