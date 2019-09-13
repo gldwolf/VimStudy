@@ -34,6 +34,11 @@ function MyDiff()
   endif
 endfunction
 
+" 设置文件的编码方式为 utf-8
+set encoding=utf-8
+set termencoding=utf-8
+set fileencoding=utf-8
+set fileencodings=ucs-bom,utf-8,chinese,cp936
 " 解决消息乱码的问题
 language messages zh_CN.utf-8
 
@@ -76,11 +81,7 @@ set showmatch     " 设置匹配模式，相当于括号匹配
 set smartindent   " 智能对齐
 set hlsearch      " 设置高亮搜索显示
 set ai"[!]        "设置自动缩进, 后面的 ！表示的是如果当前为自动缩进模式，那么就切换为不自动缩进模式
-" 设置文件的编码方式为 utf-8
-set encoding=utf-8
-set termencoding=utf-8
-set fileencoding=utf-8
-set fileencodings=ucs-bom,utf-8,chinese,cp936
+
 set wrap          " 设置自动换行
 set autochdir     " 自动切换当前目录为正在编辑的文件所在的目录
 set scrolloff=5   " 设置在光标接近底部或成顶部时自动上滚或下滚
