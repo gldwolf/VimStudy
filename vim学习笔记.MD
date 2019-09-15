@@ -1,5 +1,5 @@
-
-在命令行下：
+# Vim 学习笔记
+### 在命令行下：
 Ctrl + H	删除上一个字符
 Ctrl + W	删除上一个单词
 Ctrl + V	删除光标所在行
@@ -7,10 +7,10 @@ Ctrl + A	快速移动到行首
 Ctrl + E	快速移动到行尾
 
 
-在 vim 下：
+### 在 vim 下：
 gi	快速跳转到最后一次编辑的地方，并进行插入模式
 
-Vim 快速移动：
+### Vim 快速移动：
 w/W	移动到下一个 word/WORD 开头
 e/E	移动到下一个 word/WORD 结尾
 b/B	移动到上一个 word/WORD 开头
@@ -299,3 +299,4 @@ Vim 脚本可以实现强大的 Vim 插件
 
 ## nnoremap/vnoremap/inoremap 分别代表各种模式下的非递归映射：即 no recursive map
 ！！！任何时候都应该使用非递归映射！！！
+

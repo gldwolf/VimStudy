@@ -17,6 +17,8 @@ set autochdir     " 自动切换当前目录为正在编辑的文件所在的目
 set scrolloff=5   " 设置在光标接近底部或成顶部时自动上滚或下滚
 set incsearch     " 设置增量查找
 set foldmethod=indent   " 设置代码的折叠方式，换进行折叠
+set nobackup        " 设置不生成备份文件
+set vb t_vb=            " 关闭错误提示音
 
 " **********************
 "         映射

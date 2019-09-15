@@ -87,12 +87,15 @@ set autochdir     " 自动切换当前目录为正在编辑的文件所在的目
 set scrolloff=5   " 设置在光标接近底部或成顶部时自动上滚或下滚
 set incsearch     " 设置增量查找
 set foldmethod=indent   " 设置代码的折叠方式，换进行折叠
+set nobackup 		"设置不生成备份文件
+set vb t_vb=
 
 " **********************
 "         映射
 " **********************
 " +++++++ 设置 <leader> 键，来辅助 +++++++++++
 let mapleader=","
+map <C-n> :NERDTreeToggle<CR>
 
 
 " ======= insert 模式 =======
@@ -108,6 +111,8 @@ noremap <C-k> <C-w>k
 noremap <C-l> <C-w>l
 " nnoremap <space> viw        " 使用空格键来选定一个单词
 nnoremap <leader>w :w<cr>   " 在 normal 模式下使用 , + w 来将缓冲区写入到文件
+
+
 
 "    ______  _____     ______   ____      ____   ___   _____     ________  
 "  .' ___  ||_   _|   |_   _ `.|_  _|    |_  _|.'   `.|_   _|   |_   __  | 
