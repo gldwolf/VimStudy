@@ -164,5 +164,117 @@ Java 程序需要通过栈上的 reference 数据来操作堆上的具体对象�
 
 HotSpot 使用直接指针的方式进行对象访问。
 
+### 2.3 实战：OutOfMemoryError 异常
+
+除了程序计数器外，虚拟机内存的其他几个运行时区域都有发生 OOM 异常的可能 。
+
+#### 2.3.1 Java 堆溢出
+
+```java
+/**
+ * 堆溢出异常
+ * VM Args: -Xms20m -Xmx20m -XX:+HeapDumpOnOutOfMemoryError
+ * @author Gldwolf
+ */
+public class HeapOOM {
+    static class OOMObject {
+
+    }
+
+    public static void main(String[] args) {
+        List<OOMObject> list = new ArrayList<OOMObject>();
+
+        while (true) {
+            list.add(new OOMObject());
+        }
+    }
+}
+```
+
+#### 2.3.2 虚拟机栈和本地方法栈溢出
+
+由于在 HotSpot 虚拟机中并不区分虚拟机栈和本地方法栈，因此，对于 HotSpot 而言，虽然 `-Xoss` 参数（设置本地方法栈大小）存在，但实际上是无效的，栈容量只由 `-Xss` 参数设定。
+
+关于虚拟机栈和本地方法栈，有两种异常：
+
+- 如果线程请求的栈深度大于虚拟机所允许的最大深度，将抛出 StackOverflowError 异常
+- 如果虚拟机在扩展栈时无法申请到足够的内存空间，则抛出 OutOfMemoryError 异常
+
+```java
+/**
+ * VM Args: -Xss128k
+ */
+public class JavaVMStackSOF {
+    private int stackLength = 1;
+
+    public void stackLeak() {
+        stackLength++;
+        stackLeak();
+    }
+
+    public static void main(String[] args) throws Throwable {
+        JavaVMStackSOF oom = new JavaVMStackSOF();
+        try {
+            oom.stackLeak();
+        } catch (Throwable e) {
+            System.out.println("Stack length: " + oom.stackLength);
+            throw e;
+        }
+    }
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
