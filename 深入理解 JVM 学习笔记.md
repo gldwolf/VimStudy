@@ -224,7 +224,71 @@ public class JavaVMStackSOF {
 }
 ```
 
+#### 2.3.3 方法区内存溢出
 
+
+
+#### 2.3.4 直接内存溢出
+
+```java
+import sun.misc.Unsafe;
+
+import java.lang.reflect.Field;
+
+/**
+ * VM Args: -Xmx20m -XX:MaxDirectMemorySize=10m
+ */
+public class DirectMemoryOOM {
+    private static final int _1MB = 1024 * 1024;
+
+    public static void main(String[] args) throws IllegalAccessException {
+        Field unsafeField = Unsafe.class.getDeclaredFields()[0];
+        unsafeField.setAccessible(true);
+        Unsafe unsafe = (Unsafe) unsafeField.get(null);
+        while (true) {
+            unsafe.allocateMemory(_1MB);
+        }
+    }
+}
+```
+
+## 3 垃圾收集器与内存分配策略
+
+### 3.1 垃圾收集器
+
+#### 3.1.1 引用计数器
+
+引用计算算法的缺陷：对象 objA 和对象 objB 都有字段 instance，赋值令 objA.instance = objB，令 objB.instance = objA，除此之外 ，这两个对象再无其它引用 ，这将导致它们的引用都不为 0，于是，引用计数算法将无法通知 GC 收集器来回收它们。
+
+```java
+/**
+ * testGC() 方法执行后，objA 和 objB 会不会被 GC 呢？
+ */
+public class ReferenceCountingGC {
+
+    public Object instance = null;
+
+    private static final int _1MB = 1024 * 1024;
+
+    /*
+        这个成员属性的唯一意义就是占用点内存，以便能在 GC 日志中看清楚是否被回收过
+     */
+    private byte[] bigSize = new byte[2 * _1MB];
+
+    public static void main(String[] args) {
+        ReferenceCountingGC objA = new ReferenceCountingGC();
+        ReferenceCountingGC objB = new ReferenceCountingGC();
+        objA.instance = objB;
+        objB.instance = objA;
+
+        objA = null;
+        objB = null;
+
+        // 假设在这行发生 GC 操作，看看两个对象能否被回收
+        System.gc();
+    }
+}
+```
 
 
 
