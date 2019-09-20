@@ -1606,7 +1606,64 @@ Inside TextEditor constructor.
 Inside checkSpelling.
 ```
 
-#### 6.2.3 @Autowired 中的（required=false）选项
+#### 6.2.3 构造函数中的 @Autowired
+
+我们也可以在构造函数中使用 @Autowired。在一个构造函数中使用 @Autowired 说明当创建 bean时，即使在 XML 文件中没有配置这个属性，那么这个属性也会被自动装配。
+
+示例：
+
+**TextEditor.java**
+
+```java
+import org.springframework.beans.factory.annotation.Autowired;
+public class TextEditor {
+   private SpellChecker spellChecker;
+   @Autowired
+   public TextEditor(SpellChecker spellChecker){
+      System.out.println("Inside TextEditor constructor." );
+      this.spellChecker = spellChecker;
+   }
+   public void spellCheck(){
+      spellChecker.checkSpelling();
+   }
+}
+```
+
+**Beans.xml**
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+   <context:annotation-config/>
+
+   <!-- 这个 bean 定义中并没有定义构造函数的参数 -->
+   <bean id="textEditor" class="com.tutorialspoint.TextEditor">
+   </bean>
+
+   <!-- Definition for spellChecker bean -->
+   <bean id="spellChecker" class="com.tutorialspoint.SpellChecker">
+   </bean>
+
+</beans>
+```
+
+如果上述程序运行成功，将会输出以下消息：
+
+```
+Inside SpellChecker constructor.
+Inside TextEditor constructor.
+Inside checkSpelling.
+```
+
+#### 6.2.4 @Autowired 中的（required=false）选项
 
 默认情况下，@Autowired 注解意味着依赖是必须的，它类似于 @Required 注解，我们也可以使用 @Autowired 的（required=false）选项关闭默认行为。
 
@@ -2037,6 +2094,740 @@ public class AppConfig {
 ### 6.6 Spring 中的事件处理
 
 Spring 的核心是 ApplicationContext，它负责管理 beans 的完整生命周期。当加载 beans 时，ApplicationContext 发布某些类型的事件。例如，当上下文启动时，ContextStartedEvent 发布，当上下文停止时，ContextStoppedEvent 事件发布。
+
+通过 ApplicationEvent 类和 ApplicationListener 接口来提供在 ApplicationContext 中处理事件。如果一个 bean 实现了 ApplicationListener，那么每次 ApplicationEvent 被发布到 ApplicationContext 上，则会通知这个 bean。
+
+Spring 提供了以下的标准事件：
+
+|      Spring 内置事件      |                             描述                             |
+| :-----------------------: | :----------------------------------------------------------: |
+| **ContextRefreshedEvent** | ApplicationContext 被初始化或刷新时，该事件被发布。也可以在 ConfigurableApplicationContext 接口中使用 refresh() 方法来触发 |
+|  **ContextStartedEvent**  | 当使用 ConfigurableApplicationContext 接口中的 start() 方法启动 ApplicationContext 时，该事件被发布。我们可以在这个事件被发布后去查询数据库，或者重启任何停止的应用程序 |
+|  **ContextStoppedEvent**  | 当使用 ConfigurableApplicationContext 接口中的 stop() 方法停止 ApplicationContext 时，发布这个事件。我们可以在接收到这个事件后做必要的清理工作 |
+|  **ContextClosedEvent**   | 当使用 ConfigurableApplicationContext 接口中的 close() 方法关闭 ApplicationContext 时，该事件被发布。一个已关闭的上下文对象到达生命周期末端，它将不能被刷新或重启 |
+|  **RequestHandledEvent**  | 这是一个 web-specific 事件，告诉所有的 bean HTTP 请求已经被服务 |
+
+由于 Spring 的事件处理是单线程的，所以，如果一个事件被发布，除非所有的接收者都收到该消息，否则该进程将会阻塞，并且流程将不会继续。因此，如果要使用事件处理，应当注意这一点。
+
+#### 6.6.1 监听上下文事件
+
+为了监听上下文事件，一个 bean 应该实现 **ApplicationListener** 接口，这个接口只有一个 **onApplicationEvent()** 方法。
+
+示例：
+
+**HelloWorld.java**
+
+```java
+public class HelloWorld {
+   private String message;
+   public void setMessage(String message){
+      this.message  = message;
+   }
+   public void getMessage(){
+      System.out.println("Your Message : " + message);
+   }
+}
+```
+
+**CStartEventHandler.java**
+
+```java
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextStartedEvent;
+public class CStartEventHandler 
+   implements ApplicationListener<ContextStartedEvent>{
+   public void onApplicationEvent(ContextStartedEvent event) {
+      System.out.println("ContextStartedEvent Received");
+   }
+}
+```
+
+**CStopEventHandler.java**
+
+```java
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextStoppedEvent;
+public class CStopEventHandler 
+   implements ApplicationListener<ContextStoppedEvent>{
+   public void onApplicationEvent(ContextStoppedEvent event) {
+      System.out.println("ContextStoppedEvent Received");
+   }
+}
+```
+
+**MainApp.java**
+
+```java
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class MainApp {
+   public static void main(String[] args) {
+      ConfigurableApplicationContext context = 
+      new ClassPathXmlApplicationContext("Beans.xml");
+
+      // Let us raise a start event.
+      context.start();
+
+      HelloWorld obj = (HelloWorld) context.getBean("helloWorld");
+
+      obj.getMessage();
+
+      // Let us raise a stop event.
+      context.stop();
+   }
+}
+```
+
+**Beans.xml**
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+   <bean id="helloWorld" class="com.tutorialspoint.HelloWorld">
+      <property name="message" value="Hello World!"/>
+   </bean>
+
+   <bean id="cStartEventHandler" 
+         class="com.tutorialspoint.CStartEventHandler"/>
+
+   <bean id="cStopEventHandler" 
+         class="com.tutorialspoint.CStopEventHandler"/>
+
+</beans>
+```
+
+如果上述代码运行成功，则会返回如下结果：
+
+```
+ContextStartedEvent Received
+Your Message : Hello World!
+ContextStoppedEvent Received
+```
+
+### 6.7 Spring 中的自定义事件(后续整理)
+
+Spring 中的自定义事件一般分为如下几步：
+
+1. 通过扩展 **ApplicationEvent**,创建一个事件类 CustomEvent。这个类必须定义一个默认的构造函数，它应该从 ApplicationEvent 类中继承的构造函数。
+2. 一旦定义事件类，你可以从任何类中发布它，假定 EventClassPublisher 实现了 ApplicationEventPublisherAware。你还需要在 XML 配置文件中声明这个类作为一个 bean，之所以容器可以识别 bean 作为事件发布者，是因为它实现了 ApplicationEventPublisherAware 接口。
+
+## 7 Spring AOP
+
+> Spring 框架的一个关键组件是面向切面编程（AOP）框架。面向切面编程需要把程序逻辑分解成不同的部分，称为关注点。跨一个应用程序的多个点的功能被称为**横切关注点**，这些横切关注点在概念上独立于应用程序的业务逻辑。比如：日志记录、审计、声明式事务、安全性和缓存等。
+
+依赖注入帮助我们对应用程序对象相互解耦，而 AOP 可以帮助我们从它们所影响的对象中对横切关注点解耦。
+
+**AOP 术语**（待整理）：
+
+|      项       |                             描述                             |
+| :-----------: | :----------------------------------------------------------: |
+|    Aspect     | 一个模块具有一组提供横切需求的 APIs。例如，一个日志模块为了记录日志将被 AOP 方面调用。应用程序可以拥有任意数量的方面，这取决于需求。 |
+|  Join point   | 在你的应用程序中它代表一个点，你可以在插件 AOP 方面。你也能说，它是在实际的应用程序中，其中一个操作将使用 Spring AOP 框架。 |
+|    Advice     | 这是实际行动之前或之后执行的方法。这是在程序执行期间通过 Spring AOP 框架实际被调用的代码。 |
+|   Pointcut    | 这是一组一个或多个连接点，通知应该被执行。你可以使用表达式或模式指定切入点正如我们将在 AOP 的例子中看到的。 |
+| Introduction  |           引用允许你添加新方法或属性到现有的类中。           |
+| Target object | 被一个或者多个方面所通知的对象，这个对象永远是一个被代理对象。也称为被通知对象。 |
+|    Weaving    | Weaving 把方面连接到其它的应用程序类型或者对象上，并创建一个被通知的对象。这些可以在编译时，类加载时和运行时完成。 |
+
+**通知的类型**
+
+Spring 切面可以使用如下五种通知工作：
+
+|      通知      |                             描述                             |
+| :------------: | :----------------------------------------------------------: |
+|    前置通知    |                在一个方法执行之前，执行通知。                |
+|    后置通知    |         在一个方法执行之后，不考虑其结果，执行通知。         |
+|   返回后通知   |   在一个方法执行之后，只有在方法成功完成时，才能执行通知。   |
+| 抛出异常后通知 | 在一个方法执行之后，只有在方法退出抛出异常时，才能执行通知。 |
+|    环绕通知    |             在建议方法调用之前和之后，执行通知。             |
+
+**实现自定义切面**
+
+Spring 支持 **@AspectJ annotation style** 的方法和基于模式的方法来实现自定义切面。
+
+| 方法                 | 描述                                                |
+| -------------------- | --------------------------------------------------- |
+| **XML Schema based** | 切面是使用常规类以及基于配置的 XML 来实现的         |
+| **@AspectJ based**   | @AspectJ 引用一种声明切面的风格作为常规 Java 类注解 |
+
+### 7.1 Spring 中基于 AOP 的 XML 架构
+
+为了使用 AOP 命名空间标签，需要导入 spring-aop 架构，如下所示：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+    http://www.springframework.org/schema/aop 
+    http://www.springframework.org/schema/aop/spring-aop-3.0.xsd ">
+
+   <!-- bean definition & AOP specific configuration -->
+
+</beans>
+```
+
+此外，还需要在 CLASSPATH 中使用以下 AspectJ 依赖：
+
+- aspectjrt.jar
+- aspectjweaver.jar
+- aspectj.jar
+- aopalliance.jar
+
+#### 7.1.1 声明一个 aspect
+
+一个 aspect 是使用标签声明的，依赖的 bean 是使用 ref 属性引用的，如下所示：
+
+```xml
+<aop:config>
+    <aop:aspect id="myAspect" ref="aBean">
+   ...
+   </aop:aspect>
+</aop:config>
+<bean id="aBean" class="...">
+...
+</bean>
+```
+
+在这里，"aBean" 将会被配置和依赖注入。
+
+#### 7.1.2 声明一个切入点
+
+在处理基于配置的 XML 架构时，切入点将会按照如下所示定义：
+
+```xml
+<aop:config>
+   <aop:aspect id="myAspect" ref="aBean">
+   <aop:pointcut id="businessService"
+      expression="execution(* com.xyz.myapp.service.*.*(..))"/>
+   ...
+   </aop:aspect>
+</aop:config>
+<bean id="aBean" class="...">
+...
+</bean>
+```
+
+**使用示例**：下面的示例定义了一个名为 "businessService" 的切入点，该切入点将与 com.tutorialspoint 包下的 Student 类中的 getName() 方法相匹配：
+
+```xml
+<aop:config>
+   <aop:aspect id="myAspect" ref="aBean">
+   <aop:pointcut id="businessService"
+      expression="execution(* com.tutorialspoint.Student.getName(..))"/>
+   ...
+   </aop:aspect>
+</aop:config>
+<bean id="aBean" class="...">
+...
+</bean>
+```
+
+#### 7.1.3 声明建议
+
+我们可以使用 \<aop:{ADVICE NAME}> 元素在一个配置中声明一个建议中任何一个，如下所示：
+
+```xml
+<aop:config>
+   <aop:aspect id="myAspect" ref="aBean">
+      <aop:pointcut id="businessService"
+         expression="execution(* com.xyz.myapp.service.*.*(..))"/>
+      <!-- a before advice definition -->
+      <aop:before pointcut-ref="businessService" 
+         method="doRequiredTask"/>
+      <!-- an after advice definition -->
+      <aop:after pointcut-ref="businessService" 
+         method="doRequiredTask"/>
+      <!-- an after-returning advice definition -->
+      <!--The doRequiredTask method must have parameter named retVal -->
+      <aop:after-returning pointcut-ref="businessService"
+         returning="retVal"
+         method="doRequiredTask"/>
+      <!-- an after-throwing advice definition -->
+      <!--The doRequiredTask method must have parameter named ex -->
+      <aop:after-throwing pointcut-ref="businessService"
+         throwing="ex"
+         method="doRequiredTask"/>
+      <!-- an around advice definition -->
+      <aop:around pointcut-ref="businessService" 
+         method="doRequiredTask"/>
+   ...
+   </aop:aspect>
+</aop:config>
+<bean id="aBean" class="...">
+...
+</bean>
+```
+
+我们可以对不同的建议使用相同的 doRequiredTask 或者不同的方法。这些方法将会作为 aspect 模块的一部分来定义。
+
+#### 7.1.4 基于 XML 架构的 AOP 示例
+
+**Logging.java**：
+
+```java
+package com.tutorialspoint;
+public class Logging {
+   /** 
+    * This is the method which I would like to execute
+    * before a selected method execution.
+    */
+   public void beforeAdvice(){
+      System.out.println("Going to setup student profile.");
+   }
+   /** 
+    * This is the method which I would like to execute
+    * after a selected method execution.
+    */
+   public void afterAdvice(){
+      System.out.println("Student profile has been setup.");
+   }
+   /** 
+    * This is the method which I would like to execute
+    * when any method returns.
+    */
+   public void afterReturningAdvice(Object retVal){
+      System.out.println("Returning:" + retVal.toString() );
+   }
+   /**
+    * This is the method which I would like to execute
+    * if there is an exception raised.
+    */
+   public void AfterThrowingAdvice(IllegalArgumentException ex){
+      System.out.println("There has been an exception: " + ex.toString());   
+   }  
+```
+
+**Student.java**
+
+```java
+package com.tutorialspoint;
+public class Student {
+   private Integer age;
+   private String name;
+   public void setAge(Integer age) {
+      this.age = age;
+   }
+   public Integer getAge() {
+      System.out.println("Age : " + age );
+      return age;
+   }
+   public void setName(String name) {
+      this.name = name;
+   }
+   public String getName() {
+      System.out.println("Name : " + name );
+      return name;
+   }  
+   public void printThrowException(){
+       System.out.println("Exception raised");
+       throw new IllegalArgumentException();
+   }
+}
+```
+
+**MainApp.java**
+
+```java
+package com.tutorialspoint;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+public class MainApp {
+   public static void main(String[] args) {
+      ApplicationContext context = 
+             new ClassPathXmlApplicationContext("Beans.xml");
+      Student student = (Student) context.getBean("student");
+      student.getName();
+      student.getAge();      
+      student.printThrowException();
+   }
+}
+```
+
+**Beans.xml**
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+    http://www.springframework.org/schema/aop 
+    http://www.springframework.org/schema/aop/spring-aop-3.0.xsd ">
+
+   <aop:config>
+      <aop:aspect id="log" ref="logging">
+          <!-- 该切入点将与 tutorialspoint 包下的所有方法的所有类相匹配 -->
+         <aop:pointcut id="selectAll" 
+         expression="execution(* com.tutorialspoint.*.*(..))"/>
+         <aop:before pointcut-ref="selectAll" method="beforeAdvice"/>
+         <aop:after pointcut-ref="selectAll" method="afterAdvice"/>
+         <aop:after-returning pointcut-ref="selectAll" 
+                              returning="retVal"
+                              method="afterReturningAdvice"/>
+         <aop:after-throwing pointcut-ref="selectAll" 
+                             throwing="ex"
+                             method="AfterThrowingAdvice"/>
+      </aop:aspect>
+   </aop:config>
+
+   <!-- Definition for student bean -->
+   <bean id="student" class="com.tutorialspoint.Student">
+      <property name="name"  value="Zara" />
+      <property name="age"  value="11"/>      
+   </bean>
+
+   <!-- Definition for logging aspect -->
+   <bean id="logging" class="com.tutorialspoint.Logging"/> 
+
+</beans>
+```
+
+如果上述代码执行成功，则会输出如下内容：
+
+```
+Going to setup student profile.
+Name : Zara
+Student profile has been setup.
+Returning:Zara
+Going to setup student profile.
+Age : 11
+Student profile has been setup.
+Returning:11
+Going to setup student profile.
+Exception raised
+Student profile has been setup.
+There has been an exception: java.lang.IllegalArgumentException
+.....
+other exception content
+```
+
+上述的 Beans.xml 配置文件中配置的切入点对应 tutorialspoint 包下的所有类的所有方法。我们可以通过使用真实类和方法名来替换切入点定义中的星号（*）来指定切入点的方法的执行范围。如下所示：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+    http://www.springframework.org/schema/aop 
+    http://www.springframework.org/schema/aop/spring-aop-3.0.xsd ">
+
+   <aop:config>
+   <aop:aspect id="log" ref="logging">
+      <aop:pointcut id="selectAll" 
+      expression="execution(* com.tutorialspoint.Student.getName(..))"/>
+      <aop:before pointcut-ref="selectAll" method="beforeAdvice"/>
+      <aop:after pointcut-ref="selectAll" method="afterAdvice"/>
+   </aop:aspect>
+   </aop:config>
+
+   <!-- Definition for student bean -->
+   <bean id="student" class="com.tutorialspoint.Student">
+      <property name="name"  value="Zara" />
+      <property name="age"  value="11"/>      
+   </bean>
+
+   <!-- Definition for logging aspect -->
+   <bean id="logging" class="com.tutorialspoint.Logging"/> 
+
+</beans>
+```
+
+更改后的程序将会输出如下结果：
+
+```
+Going to setup student profile.
+Name : Zara
+Student profile has been setup.
+Age : 11
+Exception raised
+.....
+other exception content
+```
+
+### 7.2 Spring 中基于 AOP 的 @AspectJ
+
+@AspectJ 是作为 Java 注解的普通的 Java 类，它指的是声明 aspects 的一种风格。
+
+可以通过在 XML 配置文件中添加以下元素，使得 @AspectJ 可用：
+
+```xml
+<aop:aspectj-autoproxy/>
+```
+
+可能还需要添加以下依赖：
+
+- aspectjrt.jar
+- aspectjweaver.jar
+- aspectj.jar
+- aopalliance.jar
+
+#### 7.2.1 声明一个 aspect 类
+
+Aspects 类和其他任何普通的 bean 一样，除了它们会用 @AspectJ 注解之外，如下所示：
+
+```java
+package org.xyz;
+import org.aspectj.lang.annotation.Aspect;
+@Aspect
+public class AspectModule {
+}
+```
+
+这个 bean 要在 XML 中按照如下的方式进行配置，就和其他的普通的 bean 一样：
+
+```xml
+<bean id="myAspect" class="org.xyz.AspectModule">
+   <!-- configure properties of aspect here as normal -->
+</bean>
+```
+
+#### 7.2.2 声明一个切入点
+
+在处理基于 @AspectJ 注解配置的架构时，切入点的声明有两个部分：
+
+- 一个切入点表达式决定了要操作的类或者方法
+- 一个切入点标签包含一个名称和任意数量的参数。
+
+**示例**：下面示例中定义了一个名为 "businessService" 的切入点，该切入点将与 com.xyz.myapp.service 包下的类中可用的每一个方法相匹配：
+
+```java
+import org.aspectj.lang.annotation.Pointcut;
+@Pointcut("execution(* com.xyz.myapp.service.*.*(..))") // expression 
+private void businessService() {}  // signature
+```
+
+下面的示例中定义了一个名为 "getName" 的切入点，该切入点将与 com.tutorialspoint 包下的 Student 类中的 getName() 方法相匹配：
+
+```java
+import org.aspectj.lang.annotation.Pointcut;
+@Pointcut("execution(* com.tutorialspoint.Student.getName(..))") 
+private void getname() {}
+```
+
+#### 7.2.3 声明建议
+
+可以使用 @{ADVICE-NAME} 注解声明五个建议中的任意一个，如下所示，这在是假设已经定义了一个 businessService() 的前提下：
+
+```java
+@Before("businessService()")
+public void doBeforeTask(){
+ ...
+}
+@After("businessService()")
+public void doAfterTask(){
+ ...
+}
+@AfterReturning(pointcut = "businessService()", returning="retVal")
+public void doAfterReturnningTask(Object retVal){
+  // you can intercept retVal here.
+  ...
+}
+@AfterThrowing(pointcut = "businessService()", throwing="ex")
+public void doAfterThrowingTask(Exception ex){
+  // you can intercept thrown exception here.
+  ...
+}
+@Around("businessService()")
+public void doAroundTask(){
+ ...
+}
+```
+
+我们也可以在添加建议的时候指定要处理的对象，如下所示：
+
+```java
+@Before("execution(* com.xyz.myapp.service.*.*(..))")
+public doBeforeTask(){
+ ...
+}
+```
+
+#### 7.2.4 基于 @AspectJ 的 AOP 示例
+
+**Logging.java**
+
+```java
+package com.tutorialspoint;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.After;
+import org.aspectj.lang.annotation.AfterThrowing;
+import org.aspectj.lang.annotation.AfterReturning;
+import org.aspectj.lang.annotation.Around;
+@Aspect
+public class Logging {
+   /** Following is the definition for a pointcut to select
+    *  all the methods available. So advice will be called
+    *  for all the methods.
+    */
+   @Pointcut("execution(* com.tutorialspoint.*.*(..))")
+   private void selectAll(){}
+   /** 
+    * This is the method which I would like to execute
+    * before a selected method execution.
+    */
+   @Before("selectAll()")
+   public void beforeAdvice(){
+      System.out.println("Going to setup student profile.");
+   }
+   /** 
+    * This is the method which I would like to execute
+    * after a selected method execution.
+    */
+   @After("selectAll()")
+   public void afterAdvice(){
+      System.out.println("Student profile has been setup.");
+   }
+   /** 
+    * This is the method which I would like to execute
+    * when any method returns.
+    */
+   @AfterReturning(pointcut = "selectAll()", returning="retVal")
+   public void afterReturningAdvice(Object retVal){
+      System.out.println("Returning:" + retVal.toString() );
+   }
+   /**
+    * This is the method which I would like to execute
+    * if there is an exception raised by any method.
+    */
+   @AfterThrowing(pointcut = "selectAll()", throwing = "ex")
+   public void AfterThrowingAdvice(IllegalArgumentException ex){
+      System.out.println("There has been an exception: " + ex.toString());   
+   }  
+}
+```
+
+**Student.java**
+
+```java
+package com.tutorialspoint;
+public class Student {
+   private Integer age;
+   private String name;
+   public void setAge(Integer age) {
+      this.age = age;
+   }
+   public Integer getAge() {
+      System.out.println("Age : " + age );
+      return age;
+   }
+   public void setName(String name) {
+      this.name = name;
+   }
+   public String getName() {
+      System.out.println("Name : " + name );
+      return name;
+   }
+   public void printThrowException(){
+      System.out.println("Exception raised");
+      throw new IllegalArgumentException();
+   }
+}
+```
+
+**MainApp.java**
+
+```java
+package com.tutorialspoint;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+public class MainApp {
+   public static void main(String[] args) {
+      ApplicationContext context = 
+             new ClassPathXmlApplicationContext("Beans.xml");
+      Student student = (Student) context.getBean("student");
+      student.getName();
+      student.getAge();     
+      student.printThrowException();
+   }
+}
+```
+
+**Beans.xml**
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+    http://www.springframework.org/schema/aop 
+    http://www.springframework.org/schema/aop/spring-aop-3.0.xsd ">
+
+    <aop:aspectj-autoproxy/>
+
+   <!-- Definition for student bean -->
+   <bean id="student" class="com.tutorialspoint.Student">
+      <property name="name"  value="Zara" />
+      <property name="age"  value="11"/>      
+   </bean>
+
+   <!-- Definition for logging aspect -->
+   <bean id="logging" class="com.tutorialspoint.Logging"/> 
+
+</beans>
+```
+
+如果程序运行成功，将会得到如下输出结果：
+
+```
+Going to setup student profile.
+Name : Zara
+Student profile has been setup.
+Returning:Zara
+Going to setup student profile.
+Age : 11
+Student profile has been setup.
+Returning:11
+Going to setup student profile.
+Exception raised
+Student profile has been setup.
+There has been an exception: java.lang.IllegalArgumentException
+.....
+other exception content
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
