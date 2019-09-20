@@ -2801,37 +2801,440 @@ There has been an exception: java.lang.IllegalArgumentException
 other exception content
 ```
 
+## 8 Spring JDBC 框架（后面再整理）
 
 
 
+## 9 Spring 事务管理（后面再整理）
 
 
 
+## 10 Spring Web MVC 框架
 
+> Spring web MVC 框架提供了 "**模型-视图-控制**" 的体系结构和可以用来开发灵活、松散耦合的 web 应用程序的组件。
 
+- **模型**：封装了应用程序数据，并且通常它们由 POJO 组成
+- **视图**：主要用于呈现模型数据，并且通常它生成客户端的浏览器可以解释的 HTML 输出
+- **控制器**：主要用于处理用户请求，并且构建合适的模型，并将其传递到视图呈现
 
+**DispatcherServlet**
 
+Spring Web 模型-视图-控制 （MVC）框架是围绕 DispatcherServlet 设计的，DispatcherServlet 用来处理所有的 HTTP 请求和响应。Spring Web MVC DispatcherServlet 的请求处理的工作流程如下图所示：
 
+![](static/spring/6.png)
 
+下面是对应于 DispatcherServlet 传入 HTTP 请求的事件序列：
 
+1. 收到一个 HTTP 请求后，DispatcherServlet 根据 HandlerMapping 来选择并且调用适用的控制器处理请求
+2. 控制器接收请求后，并根据请求使用的 GET 或 POST 方法来调用适当的 service 方法。service 方法将设置基于定义的业务逻辑的模型数据，并返回视图名称到 DispatcherServlet 中
+3. DispatcherServlet 会从 ViewResolver 中为请求检索定义视图
+4. 一旦确定视图后，DispatcherServlet 将把模型数据传递给视图，最后显现在浏览器中
 
+上面所提到的所有组件，即 **HandlerMapping、Controller 和 ViewResolver 是 WebApplicationContext 的一部分**，而 WebApplicationContext 是带有一些对 web 应用程序必要的额外特性的 ApplicationContext 的扩展。
 
+**需求的配置**
 
+需要映射我们想让 DispatcherServlet 处理的请求，通过使用在 **web.xml** 文件中的一个 URL 映射。下面是一个显式声明和映射 HelloWeb DispathcerServlet 的示例：
 
+web.xml 文件将被保留在应用程序的 WebContent/WEB-INF 目录下。
 
+在初始化 HelloWeb DispatcherServlet 时，该框架将尝试加载位于应用程序的 WebContent/WEB-INF 目录中文件名为 `[servlet-name]-servlet.xml` 的应用程序内容。在这个例子中，配置文件为 `HelloWeb-servlet.xml`。
 
+接下来，标签表明哪些 URLs 将被 DispatcherServlet 处理。这里所有以 `.jsp` 结束的 HTTP 请求将由 HelloWeb DispatcherServlet 处理。
 
+如果不使用默认文件名 `[servlet-name]-servlet.xml` 和默认的位置 WebContent/WEB-INF，我们可以通过在 web.xml 文件中添加 servlet 监听器 ContextLoaderListener 自定义该文件名和文件位置，如下所示：
 
+```xml
+<web-app...>
 
+....
+<context-param>
+   <param-name>contextConfigLocation</param-name>
+   <param-value>/WEB-INF/HelloWeb-servlet.xml</param-value>
+</context-param>
+<listener>
+   <listener-class>
+      org.springframework.web.context.ContextLoaderListener
+   </listener-class>
+</listener>
+</web-app>
+```
 
+HelloWeb-servlet.xml 文件，该文件位于 web 应用程序的 WebContent/WEB-INF 目录下：
 
+```xml
+<beans xmlns="http://www.springframework.org/schema/beans"
+   xmlns:context="http://www.springframework.org/schema/context"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="
+   http://www.springframework.org/schema/beans
+   http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+   http://www.springframework.org/schema/context 
+   http://www.springframework.org/schema/context/spring-context-3.0.xsd">
 
+   <context:component-scan base-package="com.tutorialspoint" />
 
+   <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+      <property name="prefix" value="/WEB-INF/jsp/" />
+      <property name="suffix" value=".jsp" />
+   </bean>
 
+</beans>
+```
 
+以下是关于 HelloWeb-servlet.xml 文件的一些要点：
 
+- **`[servlet-name]-servlet.xml` 文件**：用于创建 bean 定义，重新定义在全局范围内具有相同名称的任何已定义的 bean
+- **\<context:component-scan> 标签**：用于激活 Spring MVC 注解扫描功能，该功能允许使用注解，如 @Controller 和 @RequestMapping 等
+- **InternalResourceViewResolver**：使用定义的规则来解决视图名称。按照上述定义的规则，一个名称为 hello 的逻辑视图将发送给位于 `/WEB-INF/jsp/hello.jsp` 中实现的视图。
 
+**定义控制器**
 
+DispatcherServlet 发送请求到控制器中执行特定的功能。@Controller 注解表明被注解的这个类是一个控制器。@RequestMapping 注解用于映射 URL 到整个类或一个特定的处理方法。
+
+```java
+@Controller
+@RequestMapping("/hello")
+public class HelloController{
+   @RequestMapping(method = RequestMethod.GET)
+   public String printHello(ModelMap model) {
+      model.addAttribute("message", "Hello Spring MVC Framework!");
+      return "hello";
+   }
+}
+```
+
+**@Controller** 注解定义该类为一个 Spring MVC 控制器。在这里，第一次使用的 **@RequestMapping** 表明在该控制器中处理的所有方法都是相对于 **/hello** 路径而言的。**@RequestMapping(method = RequestMehtod.GET)** 用于声明 pringHello() 方法作为控制器的默认 service 方法来处理 HTTP GET 请求。**我们可以在相同的 URL 中定义其它方法来处理任何 POST 请求**。
+
+上面的代码用另一种方式来编写控制器，如下所示：
+
+```java
+@Controller
+public class HelloController{
+   @RequestMapping(value = "/hello", method = RequestMethod.GET)
+   public String printHello(ModelMap model) {
+      model.addAttribute("message", "Hello Spring MVC Framework!");
+      return "hello";
+   }
+}
+```
+
+**value** 属性表明这个方法要处理哪个 URL 映射，**method** 属性定义了 service 方法来处理的是什么类型的 HTTP 请求。关于上面定义的控制器，有如下几个要点要注意：
+
+- 在 service 方法（例如上面的 pringHello() 方法）中定义需要的业务处理逻辑。
+
+- 基于定义的业务逻辑，在这个方法中创建一个模型。可以设置不同的模型属性，这些属性将被视图访问并显示最终的结果。这个示例中创建了一个带有属性 "message" 的模型。
+- 一个定义的 service 方法可以返回一个包含视图名称的字符串，用于呈现该模型。这个示例返回 "hello" 作为逻辑视图的名称。
+
+**创建 JSP 视图**
+
+对于不同的表示层技术，Spring  MVC 支持许多类型的视图。包括 JSP、HTML、PDF、Excel 工作表、XML、Velocity 模板、XSLT、JSON、Atom 和 RSS 提要、JasperReports 等。
+
+最常用的是利用 JSTL 编写 JSP 模板。下面我们在 /WEB-INF/hello/hello.jsp 中编写一个简单的 hello 视图：
+
+```jsp
+<html>
+   <head>
+   <title>Hello Spring MVC</title>
+   </head>
+   <body>
+   <h2>${message}</h2>
+   </body>
+</html>
+```
+
+其中，${message} 是我们在控制器内部设置的属性。
+
+下面是各种例子。
+
+### 10.1 Spring MVC Hello World 例子
+
+**HelloController.java**
+
+```java
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.ui.ModelMap;
+
+@Controller
+@RequestMapping("/hello")
+public class HelloController { 
+   @RequestMapping(method = RequestMethod.GET)
+   public String printHello(ModelMap model) {
+      model.addAttribute("message", "Hello Spring MVC Framework!");
+      return "hello";
+   }
+}
+```
+
+**web.xml**
+
+```xml
+<web-app id="WebApp_ID" version="2.4"
+   xmlns="http://java.sun.com/xml/ns/j2ee" 
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee 
+   http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
+
+   <display-name>Spring MVC Application</display-name>
+
+   <servlet>
+      <servlet-name>HelloWeb</servlet-name>
+      <servlet-class>
+         org.springframework.web.servlet.DispatcherServlet
+      </servlet-class>
+      <load-on-startup>1</load-on-startup>
+   </servlet>
+
+   <servlet-mapping>
+      <servlet-name>HelloWeb</servlet-name>
+      <url-pattern>/</url-pattern>
+   </servlet-mapping>
+
+</web-app>
+```
+
+**HelloWeb-servlet.xml**
+
+```xml
+<beans xmlns="http://www.springframework.org/schema/beans"
+   xmlns:context="http://www.springframework.org/schema/context"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="
+   http://www.springframework.org/schema/beans     
+   http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+   http://www.springframework.org/schema/context 
+   http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+   <context:component-scan base-package="com.tutorialspoint" />
+
+   <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+      <property name="prefix" value="/WEB-INF/jsp/" />
+      <property name="suffix" value=".jsp" />
+   </bean>
+
+</beans>
+```
+
+**hello.jsp**
+
+```jsp
+<%@ page contentType="text/html; charset=UTF-8" %>
+<html>
+    <head>
+        <title>Hello World</title>
+    </head>
+    <body>
+       <h2>${message}</h2>
+    </body>
+</html>
+```
+
+web 应用程序的依赖（放入到 WebContent/WEB-INF/lib 目录中）：
+
+- commons-logging-x.y.z.jar
+- org.springframework.asm-x.y.z.jar
+- org.springframework.beans-x.y.z.jar
+- org.springframework.context-x.y.z.jar
+- org.springframework.core-x.y.z.jar
+- org.springframework.expression-x.y.z.jar
+- org.springframework.web.servlet-x.y.z.jar
+- org.springframework.web-x.y.z.jar
+- spring-web.jar
+
+### 10.2 Spring MVC 表单处理例子
+
+下面的例子中，使用了 Spring 的 Web MVC 框架的 HTML 表单。
+
+**Student.java**
+
+```java
+package com.tutorialspoint;
+
+public class Student {
+   private Integer age;
+   private String name;
+   private Integer id;
+   public void setAge(Integer age) {
+      this.age = age;
+   }
+   public Integer getAge() {
+      return age;
+   }
+   public void setName(String name) {
+      this.name = name;
+   }
+   public String getName() {
+      return name;
+   }
+   public void setId(Integer id) {
+      this.id = id;
+   }
+   public Integer getId() {
+      return id;
+   }
+}
+```
+
+**StudentController.java**
+
+```java
+package com.tutorialspoint;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.ui.ModelMap;
+@Controller
+public class StudentController {
+   @RequestMapping(value = "/student", method = RequestMethod.GET)
+   public ModelAndView student() {
+      return new ModelAndView("student", "command", new Student());
+   }   
+   @RequestMapping(value = "/addStudent", method = RequestMethod.POST)
+   public String addStudent(@ModelAttribute("SpringWeb")Student student, 
+   ModelMap model) {
+      model.addAttribute("name", student.getName());
+      model.addAttribute("age", student.getAge());
+      model.addAttribute("id", student.getId());      
+      return "result";
+   }
+}
+```
+
+在这里，第一个 service 方法 student()，我们已经在名称为 "command" 的 ModelAndView 对象中传递了一个新的 Student 对象，因为 Spring 框架需要一个名称为 "command" 的模型对象。所以，当 student() 方法被调用时，它返回一个 student.jsp 视图。
+
+其中 "student" 为视图名，"command" 为模型名，new Student() 为模型里存储的数据。**模型封装了数据，视图用于展示模型中的数据**。
+
+第二个 service 方法 addStudent() 将调用 HelloWeb/addStudent URL 中的 POST 方法。程序会根据请求提供的信息创建模型对象。最后一个 "result" 视图会从 service 方法中返回，这将会呈现一个 result.jsp
+
+**web.xml**
+
+```xml
+<web-app id="WebApp_ID" version="2.4"
+    xmlns="http://java.sun.com/xml/ns/j2ee" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee 
+    http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
+
+    <display-name>Spring MVC Form Handling</display-name>
+
+    <servlet>
+        <servlet-name>HelloWeb</servlet-name>
+        <servlet-class>
+           org.springframework.web.servlet.DispatcherServlet
+        </servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>HelloWeb</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+
+</web-app>
+```
+
+**HelloWeb-servlet.xml**
+
+```xml
+<beans xmlns="http://www.springframework.org/schema/beans"
+   xmlns:context="http://www.springframework.org/schema/context"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="
+   http://www.springframework.org/schema/beans     
+   http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+   http://www.springframework.org/schema/context 
+   http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+   <context:component-scan base-package="com.tutorialspoint" />
+
+   <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+      <property name="prefix" value="/WEB-INF/jsp/" />
+      <property name="suffix" value=".jsp" />
+   </bean>
+
+</beans>
+```
+
+**student.jsp**
+
+```jsp
+<%@taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
+<html>
+<head>
+    <title>Spring MVC Form Handling</title>
+</head>
+<body>
+
+<h2>Student Information</h2>
+<form:form method="POST" action="/HelloWeb/addStudent">
+   <table>
+    <tr>
+        <td><form:label path="name">Name</form:label></td>
+        <td><form:input path="name" /></td>
+    </tr>
+    <tr>
+        <td><form:label path="age">Age</form:label></td>
+        <td><form:input path="age" /></td>
+    </tr>
+    <tr>
+        <td><form:label path="id">id</form:label></td>
+        <td><form:input path="id" /></td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <input type="submit" value="Submit"/>
+        </td>
+    </tr>
+</table>  
+</form:form>
+</body>
+</html>
+```
+
+**result.jsp**
+
+```jsp
+<%@taglib uri="http://www.springframework.org/tags/form" prefix="form"%>
+<html>
+<head>
+    <title>Spring MVC Form Handling</title>
+</head>
+<body>
+
+<h2>Submitted Student Information</h2>
+   <table>
+    <tr>
+        <td>Name</td>
+        <td>${name}</td>
+    </tr>
+    <tr>
+        <td>Age</td>
+        <td>${age}</td>
+    </tr>
+    <tr>
+        <td>ID</td>
+        <td>${id}</td>
+    </tr>
+</table>  
+</body>
+</html>
+```
+
+下面是使用的依赖（放入 **WebContent/WEB-INF/lib** 目录中）：
+
+- commons-logging-x.y.z.jar
+- org.springframework.asm-x.y.z.jar
+- org.springframework.beans-x.y.z.jar
+- org.springframework.context-x.y.z.jar
+- org.springframework.core-x.y.z.jar
+- org.springframework.expression-x.y.z.jar
+- org.springframework.web.servlet-x.y.z.jar
+- org.springframework.web-x.y.z.jar
+- spring-web.jar
 
 
 
