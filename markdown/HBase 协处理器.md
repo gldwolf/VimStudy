@@ -331,5 +331,7 @@ public class MyRegionObserver extends BaseRegionObserver {
 
 ```
 
+## 参考资料
+1. https://juejin.im/post/5d85938f5188254f0a1ed64b
 
 
